@@ -49,7 +49,7 @@ def prepare_sequences(notes, sequence_length):
     sequence_output = tf.keras.utils.to_categorical(sequence_output)
     return sequence_input, sequence_output
 
-# Define LSTM model
+# LSTM model
 def create_model(input_shape, output_shape):
     model = Sequential()
     model.add(LSTM(512, input_shape=input_shape, return_sequences=True))
@@ -68,7 +68,7 @@ def train_model(model, sequence_input, sequence_output, epochs=1, batch_size=64)
 # Generate music using the trained model
 def generate_music(model, pitch_names, sequence_length, seed_notes, num_notes, temperature=1.0):
     int_to_note = dict((number, note) for number, note in enumerate(pitch_names))
-    pattern = seed_notes.tolist()  # Convert NumPy array to list
+    pattern = seed_notes.tolist()  
     generated_notes = []
     for i in range(num_notes):
         prediction_input = np.reshape(pattern, (1, len(pattern), 1))
@@ -84,12 +84,11 @@ def generate_music(model, pitch_names, sequence_length, seed_notes, num_notes, t
         pattern = pattern[1:len(pattern)]
     return generated_notes
 
-# Visualize generated music
+
 def visualize_music(generated_notes):
     offset = 0
     output_notes = []
     for pattern in generated_notes:
-        # If pattern is a chord
         if ('.' in pattern) or pattern.isdigit():
             notes_in_chord = pattern.split('.')
             notes = []
@@ -100,21 +99,16 @@ def visualize_music(generated_notes):
             new_chord = chord.Chord(notes)
             new_chord.offset = offset
             output_notes.append(new_chord)
-        # If pattern is a note
         else:
             new_note = note.Note(pattern)
             new_note.offset = offset
             new_note.storedInstrument = instrument.Piano()
             output_notes.append(new_note)
-        # Increase offset each iteration so that notes do not stack
         offset += 0.5
 
     # Create and save MIDI file
     midi_stream = stream.Stream(output_notes)
     midi_stream.write('midi', fp='generated_music.mid')
-
-    # Show the generated music as a piano roll
-    midi_stream.plot('pianoroll')
 
 # Main function
 if __name__ == '__main__':
@@ -125,16 +119,16 @@ if __name__ == '__main__':
     input_shape = (sequence_input.shape[1], sequence_input.shape[2])
     output_shape = sequence_output.shape[1]
 
-    # Create and train the model
+    
     model = create_model(input_shape, output_shape)
     train_model(model, sequence_input, sequence_output)
 
-    # Generate seed notes for music generation
+    
     random_index = np.random.randint(0, len(sequence_input)-1)
     seed_notes = sequence_input[random_index, :, :].flatten()
 
     # Generate music
     generated_notes = generate_music(model, sorted(set(notes)), sequence_length, seed_notes, num_notes=500)
 
-    # Visualize and play generated music
+    
     visualize_music(generated_notes)
